@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Maximum file size allowed (in bytes)
+MAX_SIZE=$((100 * 1024 * 1024)) # 100 MB
+
+# Check for files larger than the maximum size
+large_files=$(git diff --cached --name-only | xargs -I {} find "{}" -type f -size +${MAX_SIZE}c 2>/dev/null)
+
+if [[ ! -z $large_files ]]; then
+    echo "Error: The following file(s) exceed GitHub's size limit of 100 MB:"
+    echo "$large_files"
+    echo "Please remove these files or reduce their size before committing."
+    exit 1
+fi
+
+# Allow the commit if no large files are found
+exit 0
+
