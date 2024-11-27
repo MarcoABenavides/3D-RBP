@@ -7,6 +7,11 @@ import glob
 import random
 import argparse
 
+# Set seed for reproducibility
+random.seed(42)
+np.random.seed(42)
+tf.random.set_seed(42)
+
 # Function to create samples by concatenating the first 1003 rows with each 101-row segment
 def create_samples(file_path, first_segment_length=1003, segment_length=101):
     """Creates samples by concatenating the first 1003 rows with each 101-row segment in sequence."""

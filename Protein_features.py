@@ -1,6 +1,33 @@
 import os
 import pandas as pd
 
+def get_protein_labels(base_folder_path):
+    """Assign unique numeric labels to proteins based on their file names and save the mapping to a CSV in the datasets folder."""
+    protein_labels = {}  # Dictionary to store protein names and their labels
+    current_label = 1    # Start labeling from 1
+
+    # Iterate over the folders and assign labels
+    for root, dirs, files in os.walk(base_folder_path):
+        if os.path.basename(root) == 'Protein data':  # Look for 'Protein data' folders
+            for pdb_file in [f for f in files if f.endswith('.pdb')]:  # Filter PDB files
+                protein_name = os.path.splitext(pdb_file)[0]  # Get file name without extension
+                if protein_name not in protein_labels:  # Assign label if protein is new
+                    protein_labels[protein_name] = current_label
+                    current_label += 1  # Increment label counter
+
+    # Save the mapping to a CSV file in the datasets folder
+    datasets_folder = os.path.join(base_folder_path, "datasets")
+    os.makedirs(datasets_folder, exist_ok=True)  # Create the folder if it doesn't exist
+    output_file = os.path.join(datasets_folder, "protein_labels.csv")
+    
+    # Save the mapping as a CSV
+    mapping_df = pd.DataFrame(list(protein_labels.items()), columns=["Protein_Name", "Protein_Label"])
+    mapping_df.to_csv(output_file, index=False)
+    print(f"Protein-to-label mapping saved to {output_file}")
+    
+    return protein_labels  # Return the dictionary
+
+
 def extract_sequence_info_from_pdb(file_path):
     """Extract the amino acid count and sequence from SEQRES lines in a PDB file."""
     seqres_sequence = []
@@ -147,38 +174,42 @@ def one_hot_encode_structure(structure):
     return [encoding_structure[sec] for sec in structure]
 
 
-def concatenate_encodings(encoded_sequence, encoded_structure, coordinates, max_length):
+def concatenate_encodings(encoded_sequence, encoded_structure, coordinates, max_length, protein_label):
     """Concatenate encoded sequences, structures, and coordinates into a matrix format and pad to max_length."""
     concatenated_data = []
     for i in range(max_length):
         # Sequence encoding: use actual encoding or zero-pad if beyond sequence length
         seq_encoding = encoded_sequence[i] if i < len(encoded_sequence) else [0] * 20
-        
+
         # Structure encoding: use actual encoding or zero-pad if beyond sequence length
         struct_encoding = encoded_structure[i] if i < len(encoded_structure) else [0, 0, 0]
-        
+
         # Coordinates: use actual coordinates or (0, 0, 0) if beyond sequence length
         coord = coordinates.get(i, (0.0, 0.0, 0.0)) if i < len(coordinates) else (0.0, 0.0, 0.0)
-        
-        # Append the row with sequence index, sequence encoding, structure encoding, and coordinates
-        concatenated_data.append([i + 1] + seq_encoding + struct_encoding + list(coord))
+
+        # Append the row with sequence index, protein label, sequence encoding, structure encoding, and coordinates
+        concatenated_data.append([i + 1, protein_label] + seq_encoding + struct_encoding + list(coord))
     return concatenated_data
 
 
 
-def process_protein(pdb_file_path, max_length):
-    """Process the protein to extract amino acids, secondary structures, and coordinates."""
+
+def process_protein(pdb_file_path, max_length, protein_labels):
+    """Process the protein to extract amino acids, secondary structures, coordinates, and add protein labels."""
+    protein_name = os.path.splitext(os.path.basename(pdb_file_path))[0]
+    protein_label = protein_labels.get(protein_name, 0)  # Default to 0 if the protein name is not found
+
     expected_length, seqres_sequence = extract_sequence_info_from_pdb(pdb_file_path)
     coordinates = extract_ca_coordinates_with_fallback(pdb_file_path, seqres_sequence)
     secondary_structure = read_secondary_structure_from_pdb(pdb_file_path, expected_length)
     encoded_sequence = one_hot_encode_sequence(seqres_sequence)
     encoded_structure = one_hot_encode_structure(secondary_structure)
-    concatenated_data = concatenate_encodings(encoded_sequence, encoded_structure, coordinates, max_length)
+    concatenated_data = concatenate_encodings(encoded_sequence, encoded_structure, coordinates, max_length, protein_label)
     
     amino_acids = ["ALA", "CYS", "ASP", "GLU", "PHE", "GLY", "HIS", "ILE", "LYS", "LEU", 
                    "MET", "ASN", "PRO", "GLN", "ARG", "SER", "THR", "VAL", "TRP", "TYR"]
     struct_labels = ["Helix", "Strand", "Coil"]
-    columns = ["Index"] + amino_acids + struct_labels + ["X", "Y", "Z"]
+    columns = ["Index", "Protein_Label"] + amino_acids + struct_labels + ["X", "Y", "Z"]
     big_matrix_df = pd.DataFrame(concatenated_data, columns=columns)
     return big_matrix_df
 
@@ -206,8 +237,10 @@ def process_all_pdb_files_in_clip_folder():
     """Process all PDB files in each 'Protein data' folder within the dynamically calculated base folder."""
     script_dir = os.path.dirname(os.path.abspath(__file__))
     base_folder_path = os.path.join(script_dir, "Data", "datasets", "clip")
-    
+
+    protein_labels = get_protein_labels(base_folder_path)  # Fetch protein labels
     max_length = find_max_length(base_folder_path)  # Determine the max length across all files
+
     for root, dirs, files in os.walk(base_folder_path):
         if os.path.basename(root) == 'Protein data':
             for pdb_file in [f for f in files if f.endswith('.pdb')]:
@@ -221,8 +254,9 @@ def process_all_pdb_files_in_clip_folder():
                     continue
 
                 print(f"Processing file: {pdb_file_path}")
-                big_matrix_df = process_protein(pdb_file_path, max_length)
+                big_matrix_df = process_protein(pdb_file_path, max_length, protein_labels)
                 save_to_csv(big_matrix_df, output_file_prefix)
+
 
 
 if __name__ == "__main__":

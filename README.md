@@ -109,3 +109,14 @@ Below are links to the protein data sources:
 - [29_ICLIP_TIAL1_h19](https://www.rcsb.org/structure/2MJN)
 - [29_ICLIP_U2AF65_Hela_iCLIP_ctrl_all_clusters](https://www.rcsb.org/structure/5EV4)
 - [30_ICLIP_U2AF65_Hela_iCLIP_ctrl+kd_all_clusters](https://www.rcsb.org/structure/5EV4)
+
+New updtes:
+
+In the interim report I prestented the results of a CNN that took as input the concatenation  of each RNA and the protein pairing that was tested in the original implementation. This had a sigmoid function to predict the binding vs non binding of an RNA to a protein. The advantage of this CNN against the original implementations is that this CNN was more generalized, since the original implementation did a Machine Learning model for each proteins which is good but it is not ideal because in the applied world we would like to make a model that understands the overall interactions of RNA and proteins, which based on the physicochemical properties of the amino acids and the ribonucleic acids should behave in a pattern way independently of the RNA-binding protein or the RNA pair being tested. My CNN was able to get an 879% test accuracy and 80% validation accuracy which was pretty good. This model was the "CNN.py"
+
+
+For the final report I have decided to label the proteins separately so that the model can learn to predict to which protein the RNA will bind to. So instead of having a sigmoid function that predicts whether it binds or not. This model has a softmax function that predicts to which protein it binds to (and would bind to for untested Protein-RNA pairs). in order to do this, the information cannot be concatenated because in that sense the model will have a heavy bias of the protein features against the RNA being tested and won't be able to "see" beyond the protein it was tested against. So they are being treated as two separate inputs.
+
+The model for the CNN + transformer to predict to which protein it will bind to is CNN-tranformer.py
+
+
