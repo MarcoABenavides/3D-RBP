@@ -89,8 +89,6 @@ def extract_ca_coordinates_with_fallback(file_path, seqres_sequence):
 
 
 
-
-
 def read_secondary_structure_from_pdb(file_path, sequence_length):
     """Read the secondary structure from a PDB file."""
     secondary_structure = ['C'] * sequence_length  # Default to 'C' for coil
@@ -204,19 +202,28 @@ def find_max_length(base_folder_path):
     return max_length
 
 
-def process_all_pdb_files_in_clip_folder(base_folder_path):
-    """Process all PDB files in each 'Protein data' folder within the specified base folder."""
+def process_all_pdb_files_in_clip_folder():
+    """Process all PDB files in each 'Protein data' folder within the dynamically calculated base folder."""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    base_folder_path = os.path.join(script_dir, "Data", "datasets", "clip")
+    
     max_length = find_max_length(base_folder_path)  # Determine the max length across all files
     for root, dirs, files in os.walk(base_folder_path):
         if os.path.basename(root) == 'Protein data':
             for pdb_file in [f for f in files if f.endswith('.pdb')]:
                 pdb_file_path = os.path.join(root, pdb_file)
+                output_file_prefix = os.path.join(root, os.path.splitext(pdb_file)[0])
+                output_file_path = f"{output_file_prefix}_Concatenated_Encoding_Matrix.csv"
+
+                # Check if the output file already exists
+                if os.path.exists(output_file_path):
+                    print(f"Skipping {pdb_file_path} as the output file {output_file_path} already exists.")
+                    continue
+
                 print(f"Processing file: {pdb_file_path}")
                 big_matrix_df = process_protein(pdb_file_path, max_length)
-                output_file_prefix = os.path.join(root, os.path.splitext(pdb_file)[0])
                 save_to_csv(big_matrix_df, output_file_prefix)
 
 
 if __name__ == "__main__":
-    base_folder_path = '/Users/marcobenavides/repos/ML-4-FG/3D-RBP/datasets/clip'
-    process_all_pdb_files_in_clip_folder(base_folder_path)
+    process_all_pdb_files_in_clip_folder()

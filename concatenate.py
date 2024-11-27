@@ -23,6 +23,14 @@ def find_rna_and_protein_files(base_folder):
 
 def concatenate_rna_protein_matrices(rna_file_path, protein_file_path, output_folder):
     """Concatenate RNA output below the protein output, adding zero-filled columns and moving RNA columns to the right."""
+    # Define the output file path within the output folder
+    output_file_path = os.path.join(output_folder, "Combined_RNA_Protein_Matrix.csv")
+    
+    # Check if the combined file already exists
+    if os.path.exists(output_file_path):
+        print(f"Skipping {output_file_path} as it already exists.")
+        return
+
     # Load RNA and protein data matrices
     rna_df = pd.read_csv(rna_file_path)
     protein_df = pd.read_csv(protein_file_path)
@@ -47,8 +55,7 @@ def concatenate_rna_protein_matrices(rna_file_path, protein_file_path, output_fo
     # Ensure the output folder exists
     os.makedirs(output_folder, exist_ok=True)
     
-    # Define the output file path within the output folder
-    output_file_path = os.path.join(output_folder, "Combined_RNA_Protein_Matrix.csv")
+    # Save the combined DataFrame to a single CSV file
     combined_df.to_csv(output_file_path, index=False)
     
     # Print debug information to confirm save path
@@ -65,8 +72,15 @@ def process_all_pairs(base_folder):
         print(f"Output will be saved in: {output_folder}")
         concatenate_rna_protein_matrices(rna_file, protein_file, output_folder)
 
-# Define the base folder path for the "clip" directory
-base_folder_path = '/Users/marcobenavides/repos/ML-4-FG/3D-RBP/datasets/clip'
+if __name__ == "__main__":
+    # Dynamically calculate the base folder path
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    base_folder_path = os.path.join(script_dir, "Data", "datasets", "clip")
 
-# Run the processing function on all found pairs
-process_all_pairs(base_folder_path)
+    # Ensure the folder exists
+    if not os.path.exists(base_folder_path):
+        print(f"Error: Base folder {base_folder_path} does not exist.")
+        exit(1)
+
+    # Process all pairs
+    process_all_pairs(base_folder_path)
