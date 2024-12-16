@@ -1,122 +1,141 @@
 # Predicting RNA-Binding Protein Sites and Protein Affinity using a Hybrid Convolutional Neural Network and Transformer Model with Distance-Based Attention for Spatial Dependencies
 
-This project aims to predict RNA-protein interactions by leveraging a hybrid machine learning approach combining Convolutional Neural Networks (CNNs) and Transformer models. By integrating primary, secondary, and tertiary structural data of RNA and proteins, this method seeks to accurately identify RNA-binding protein (RBP) binding sites and reveal the spatial dependencies that characterize RNA-protein interactions.
+This project aims to predict RNA-protein interactions by leveraging a hybrid machine learning approach combining Convolutional Neural Networks (CNNs) and Transformer models. By integrating primary, secondary, and tertiary structural data of RNA and proteins, this method seeks to accurately identify RNA-binding protein (RBP) interactions and reveal the spatial dependencies that characterize RNA-protein interactions.
 
-## Project Proposal Overview
+---
+
+## Project Overview
 
 ### 1. Biological Question
-The project explores how RNA nucleotides interact spatially with protein binding sites in 3D space. Modeling these spatial relationships between RNA and protein structures will enhance our understanding of RNA-protein interactions and help predict which proteins bind to specific RNA regions.
+The project explores how RNA nucleotides interact spatially with protein binding sites in 3D space. Modeling these relationships between RNA and protein structures enhances our understanding of RNA-protein interactions and helps predict which proteins bind to specific RNA regions.
 
 ### 2. Machine Learning Approach
 This project implements a hybrid model that combines:
-- **CNNs** to capture short-distance relationships by analyzing primary and secondary structures.
-- **Transformers** to model long-distance spatial relationships with distance-based attention, focusing on 3D interactions.
-  
+- **CNNs**: Capture short-distance relationships by analyzing primary and secondary structures.
+- **Transformers**: Model long-distance spatial relationships with distance-based attention, focusing on 3D interactions.
+
 **Inputs**:
-- One-hot encoded primary structure of nucleotides (A, U, C, G)
-- Binary matrix for RNA secondary structures (Stems, Loops, Hairpins)
-- One-hot encoded primary structure of amino acids (e.g., Ala, Cys, Glu)
-- Binary encoding for protein secondary structures (alpha-helix, beta sheets, or coils)
-- Distance matrices representing protein tertiary structure (X, Y, Z alpha-carbon atomic coordinates)
-- Predicted RNA tertiary structure generated using tools like Rosetta or RNAComposer
+- One-hot encoded RNA primary sequences (A, U, C, G).
+- Binary matrices for RNA secondary structures (stems, loops, hairpins).
+- One-hot encoded amino acid sequences.
+- Binary encodings for protein secondary structures (alpha-helix, beta-sheet, coil).
+- Distance matrices for protein tertiary structures (atomic coordinates: X, Y, Z).
+- Predicted RNA tertiary structures generated using Rosetta or RNAComposer.
 
 **Outputs**:
-- Binary classification indicating binding sites for each RNA sequence 
-- Likelihood of Proteins binding to non tested RNA sequences
+- Binary classification indicating RNA binding sites.
+- Multi-class predictions for protein-specific binding probabilities.
 
-### 3. Data Sources
-- **Primary Datasets**: RNA sequences are sourced from the iONMF dataset (Blin, K., 2015), containing 24,000 training samples, 6,000 validation samples, and 10,000 independent test samples for 19 RBPs.
-- **3D Structural Data**: Protein 3D structures are obtained from the Protein Data Bank (PDB), and RNA secondary structures are predicted using the Vienna RNA package. Tools like Rosetta or RNAComposer are used for RNA tertiary structures.
+---
 
-### 4. Interim Report Plans
-To evaluate feasibility:
-- **Data Preparation**: Download RNA sequences, Download protein primary sequences and secondary structures, generate RNA secondary structures.
-- **Encoding**: Encode RNA and protein sequences and secondary structures, and construct Protein distance matrices for tertiary structures 
-- **Model Testing**: Run a simplified CNN model to evaluate the architecture and adjust complexity as needed.
+## Data Sources
 
-### 5. Performance Assessment
-- **Supervised**: Validate binding sequences through against reference data.
-
-
-### 6. Key References
-- Pan, X., Rijnbeek, P., Yan, J., et al. (2018). *Prediction of RNA-protein sequence and structure binding preferences using deep convolutional and recurrent neural networks*. BMC Genomics, 19, 511. [doi:10.1186/s12864-018-4889-1](https://doi.org/10.1186/s12864-018-4889-1)
-- Blin, K., et al. (2015). *DoRiNA 2.0—upgrading the doRiNA database of RNA interactions in post-transcriptional regulation*. Nucleic Acids Research, 43(D1), D160–D167. [doi:10.1093/nar/gku1153](https://doi.org/10.1093/nar/gku1153)
-- Kloczkowski, A., et al. (2009). *Distance matrix-based approach to protein structure prediction*. Journal of Structural and Functional Genomics, 10(1), 67-81. [doi:10.1007/s10969-009-9062-2](https://doi.org/10.1007/s10969-009-9062-2)
+- **Primary Datasets**: RNA sequences sourced from the iONMF dataset, containing 24,000 training samples, 6,000 validation samples, and 10,000 independent test samples for 17 RBPs.
+- **3D Structural Data**: Protein priamry, secondary and 3D information was obtained from the Protein Data Bank (PDB), and RNA secondary structures predicted using the ViennaRNA package. 
 
 ---
 
 ## Code Overview
 
-### Protein Feature Extraction (Protein_features.py)
-- Extracts protein sequence and structural features from PDB files.
-- Encodes primary and secondary structures and aligns coordinates to build a feature matrix.
+### Python Scripts (once the data has been downloaded from the following link: https://drive.google.com/drive/folders/1ZjYIe1ekvKt9Xe3HMamf5_BPcrilMc5J and the libraries have been installed run the codes in the following order):
+1. **RNA_features.py**: Encodes RNA sequences, secondary structures, and binding labels.
+2. **Protein_features.py**: Extracts protein sequences, secondary structures, and tertiary structure coordinates from PDB files.
+3. **Concatenate.py**: Concatenates the Protein encoded data to its respective RNA data pair.
+4. **Data-distribution_analysis.ipynb**: Analyzes RNA and protein feature distributions, including nucleotide, structural, and binding class counts.
+These can be run independently:
 
-### RNA Feature Extraction (RNA_features.py)
-- Processes RNA sequences from .fa.gz files.
-- Generates secondary structures using RNAfold, applies one-hot encoding, and assigns binding labels.
-
-### Matrix Concatenation (Concatenate.py)
-- Merges protein and RNA matrices, aligning features and zero-padding for compatibility.
-
-### Convolutional Neural Network (CNN.py)
-- A CNN model processes the concatenated matrices, iterating through each file and concatenating protein features with RNA segments to predict binding vs. non-binding sequences. The CNN drops 3-D data as this will be used later with the transformer.
-### Dataset Summary
-
-- **Total Samples**: 1,079,034
-- **Binding Samples**: 295,375
-- **Non-Binding Samples**: 783,659
-
-Folders not processed due to missing data:
-1. 1_PARCLIP_AGO1234_hg19
-2. 2_PARCLIP_AGO2MNASE_hg19
-3. 9_PARCLIP_ELAVL1MNASE_hg19
-4. 14_PARCLIP_FUS_mut_hg19
+4. **CNN.py**: Implements the initial CNN for binary classification.
+5. **Balanced-CNN.py**: Balances the dataset for improved predictions.
+6. **Balanced-CNN + 3D Data.py**: Adds 3D protein data to the CNN.
+7. **Balanced-CNN + 3D Data + Softmax.py**: Uses softmax for multi-class predictions.
+8. **Balanced-Transformer-CNN + 3D Data + Softmax.py**: Integrates Transformers and positional embeddings.
 
 ---
 
-### Important Notes
+## Feature Analysis
 
-- **Processing Time**: RNA sequence processing takes approximately 2 days.
+### Data Distribution Analysis
+The `Data-distribution_analysis.ipynb` script performs the following:
+- Assesses nucleotide distributions (A, C, G, U) in RNA sequences.
+- Examines RNA secondary structure types (stems, loops, hairpins, no structure).
+- Analyzes protein secondary structure distributions (helix, strand, coil).
+- Visualizes binding class distributions (binding vs non-binding).
 
-### Links to Protein Data
+### Visual Outputs:
+- Bar plots for nucleotide and RNA secondary structure distributions.
+- Bar plots for protein secondary structure distributions.
+- Confusion matrices for class predictions.
+- PCA and t-SNE visualizations of encoded features for binding vs non-binding clustering.
 
-Below are links to the protein data sources:
+---
 
-- [1_PARCLIP_AGO1234_hg19](https://www.rcsb.org)
-- [3_HITSCLIP_Ago2](https://www.rcsb.org/structure/4OLA)
-- [4_HITSCLIP_Ago2](https://www.rcsb.org/structure/4OLA)
-- [5_CLIPSEQ_AGO2_h19](https://www.rcsb.org/structure/4OLA)
-- [6_CLIP-seq-eIF4AIII_1](https://www.rcsb.org/structure/2HXY)
-- [7_CLIP-seq-eIF4AIII_2](https://www.rcsb.org/structure/2HXY)
-- [8_PARCLIP_ELAVL1_h19](https://www.rcsb.org/structure/4FXV)
-- [11_CLIPSEQ_ELAVL1_h19](https://www.rcsb.org/structure/4FXV)
-- [12_PARCLIP_EWSR1_h19](https://www.rcsb.org/structure/2CPE)
-- [13_PARCLIP_FUS_h19](https://www.rcsb.org/structure/6GBM)
-- [15_PARCLIP_IGF2BP123_h19](https://www.rcsb.org/structure/6ROL)
-- [16_ICLIP_hnRNPC_Hela_iCLIP_all_clusters](https://www.rcsb.org/structure/1TXP)
-- [17_ICLIP_hnRNPC_hg19](https://www.rcsb.org/structure/1TXP)
-- [18_ICLIP_hnRNPL](https://www.rcsb.org/sequence/3r27)
-- [19_ICLIP_hnRNPL_U266](https://www.rcsb.org/sequence/3r27)
-- [20_ICLIP_hnRNPlike_U266](https://www.rcsb.org/sequence/3r27)
-- [21_PARCLIP_MOV10_Sievers_hg19](https://alphafold.ebi.ac.uk/entry/Q9HCE1)
-- [22_ICLIP_NSUN2](https://alphafold.ebi.ac.uk/entry/Q08J23)
-- [23_PARCLIP_PUM2_hg19](https://www.rcsb.org/structure/3q0p)
-- [24_PARCLIP_QKI_hg19](https://www.rcsb.org/structure/4jvh)
-- [25_CLIPSEQ_SFRS1_hg19](https://www.rcsb.org/structure/1X4A)
-- [26_PARCLIP_TAF15_h19](https://www.rcsb.org/structure/8ONS)
-- [27_ICLIP_TDP43_h19](https://www.rcsb.org/structure/8CGG)
-- [28_ICLIP_TIA1_h19](https://www.rcsb.org/structure/2MJN)
-- [29_ICLIP_TIAL1_h19](https://www.rcsb.org/structure/2MJN)
-- [29_ICLIP_U2AF65_Hela_iCLIP_ctrl_all_clusters](https://www.rcsb.org/structure/5EV4)
-- [30_ICLIP_U2AF65_Hela_iCLIP_ctrl+kd_all_clusters](https://www.rcsb.org/structure/5EV4)
+## Model Architectures and Performance
 
-New updtes:
+| **Model Architecture**                      | **Purpose**                             | **Description**                                                                                               |
+|---------------------------------------------|-----------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| **CNN**                                     | Binary classification of RNA-RBP binding | Convolutional layers with pooling operations and a sigmoid activation layer.                                  |
+| **Balanced CNN**                            | Address data imbalance                  | CNN with balanced class representation for improved prediction.                                               |
+| **Balanced CNN + 3D Protein Data**          | Enhance binding prediction              | Adds 3D protein structural features to the CNN architecture.                                                 |
+| **Balanced CNN + 3D Data + Softmax**        | Multi-class prediction                  | Incorporates a softmax layer for predicting protein-specific binding probabilities.                           |
+| **Balanced Transformer + CNN + 3D Data + Softmax** | Integrate sequence-specific and structural features | Adds Transformer layers after the CNN for feature integration.                                                |
+| **Balanced Transformer + CNN + 3D Data + Positional Embedding** | Enhance feature representation           | Adds trainable positional embeddings with CNN and Transformer layers, concluding with softmax.                |
 
-In the interim report I prestented the results of a CNN that took as input the concatenation  of each RNA and the protein pairing that was tested in the original implementation. This had a sigmoid function to predict the binding vs non binding of an RNA to a protein. The advantage of this CNN against the original implementations is that this CNN was more generalized, since the original implementation did a Machine Learning model for each proteins which is good but it is not ideal because in the applied world we would like to make a model that understands the overall interactions of RNA and proteins, which based on the physicochemical properties of the amino acids and the ribonucleic acids should behave in a pattern way independently of the RNA-binding protein or the RNA pair being tested. My CNN was able to get an 879% test accuracy and 80% validation accuracy which was pretty good. This model was the "CNN.py"
+### Key Performance Metrics:
+- **Binary Models**:
+  - **CNN**: Accuracy: 81.16%, Validation Accuracy: 81.18%
+  - **Balanced CNN**: Improved performance with balanced datasets.
+  - **Balanced CNN + 3D Data**: Incorporates 3D structural data for enhanced accuracy.
+- **Multi-Class Models**:
+  - **Balanced CNN + 3D Data + Softmax**: Handles 34 classes, reaching a maximum accuracy of 50%.
+  - **Balanced Transformer + CNN + 3D Data + Positional Embedding**: Improved test accuracy to 87% with reduced learning rate.
 
+---
 
-For the final report I have decided to label the proteins separately so that the model can learn to predict to which protein the RNA will bind to. So instead of having a sigmoid function that predicts whether it binds or not. This model has a softmax function that predicts to which protein it binds to (and would bind to for untested Protein-RNA pairs). in order to do this, the information cannot be concatenated because in that sense the model will have a heavy bias of the protein features against the RNA being tested and won't be able to "see" beyond the protein it was tested against. So they are being treated as two separate inputs.
+## Visualization Tools
 
-The model for the CNN + transformer to predict to which protein it will bind to is CNN-tranformer.py
+### Combined Accuracy and AUC Plots:
+The script analyzes `.txt` result files to extract epoch-wise accuracy and AUC metrics for all models, generating combined plots for comparison.
 
+### Prediction Analysis:
+1. Overall accuracy.
+2. Classification report and confusion matrix.
+3. Accuracy per class and train vs. test assignment analysis.
+4. Misclassification trends using heatmaps.
+
+---
+
+## Dependencies
+
+### Required Libraries:
+```plaintext
+numpy
+pandas
+tensorflow
+scikit-learn
+matplotlib
+argparse
+```
+
+### Additional Imports:
+```python
+import os
+import glob
+import seaborn as sns
+from sklearn.metrics import roc_auc_score, confusion_matrix, classification_report, accuracy_score
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+```
+
+---
+
+## Future Directions
+
+1. **Optimize Transformers**: Fine-tune attention heads, layers, and learning rates.
+2. **Refine Positional Embeddings**: Experiment with alternative strategies for better spatial representation.
+3. **Data Quality**: Clean inconsistencies in datasets and standardize annotations across experiments.
+4. **Expand Features**: Add protein surface properties and evolutionary conservation features.
+5. **Scale Up**: Train on larger, more diverse datasets for improved generalizability.
+
+--- 
 

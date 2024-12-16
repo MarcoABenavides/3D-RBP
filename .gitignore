@@ -1,3 +1,22 @@
+# Ignore system files
+.DS_Store
+
+# Ignore all .csv files in datasets
 Data/datasets/clip/**/*.csv
-.DS_Store
-.DS_Store
+
+# Exclude intermediate and result directories
+Intermediate_steps/
+Results/
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore CSV files in all subdirectories under Data
+Data/**/*.csv
+
+# Ignore intermediate files and results
+Intermediate_steps/
+Results/
+
+# Ignore specific notebooks
+Unsupervised analysis.ipynb
